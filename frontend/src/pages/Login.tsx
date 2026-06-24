@@ -1,6 +1,6 @@
-import { useState, useCallback } from "react"
+import React, { useState, useCallback } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { SignIn } from "@phosphor-icons/react"
+import { SignInIcon } from "@phosphor-icons/react"
 
 import { useAuth } from "@/context/AuthContext"
 
@@ -27,7 +27,7 @@ export default function Login() {
   const [error, setError] = useState("")
 
   const handleSubmit = useCallback(
-    async (event: React.FormEvent<HTMLFormElement>) => {
+    async (event: React.SubmitEvent) => {
       event.preventDefault()
 
       setError("")
@@ -123,7 +123,7 @@ export default function Login() {
               className="w-full"
               disabled={isLoading}
             >
-              <SignIn weight="bold" />
+              <SignInIcon weight="bold" />
 
               {isLoading
                 ? "Signing In..."
