@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react'
+import { useState } from 'react'
 import { workloadDistribution } from '../services/aiService'
 
 export default function WorkloadDistribution() {

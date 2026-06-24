@@ -1,14 +1,38 @@
+from contextlib import asynccontextmanager
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from app.database.connection import init_db
-from app.routers import auth, users, projects, tasks, sprints, risks, ai, dashboard
+from app.routers import (
+    auth,
+    users,
+    projects,
+    tasks,
+    sprints,
+    risks,
+    ai,
+    dashboard,
+)
 
-app = FastAPI(title="Smart Task Backend")
 
-@app.on_event("startup")
-def on_startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
     init_db()
+
+    yield
+
+    # Shutdown
+    # Add cleanup logic here if needed
+    pass
+
+
+app = FastAPI(
+    title="Smart Task Backend",
+    lifespan=lifespan,
+)
 
 app.add_middleware(
     CORSMiddleware,

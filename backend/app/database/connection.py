@@ -70,7 +70,6 @@ def init_db():
             cursor.execute(statement)
         connection.commit()
     finally:
-        cursor.close()
         connection.close()
 
 

@@ -1,292 +1,579 @@
-import { useEffect, useState } from 'react'
-import { useProject } from '../context/ProjectContext'
-import TaskCard from '../components/TaskCard/TaskCard'
-import LoadingSpinner from '../components/LoadingSpinner/LoadingSpinner'
-import { createTask, fetchTasks } from '../services/taskService'
-import type { Task } from '../types/Task'
+import { useCallback, useEffect, useMemo, useState } from "react"
+
+import { useProject } from "@/context/ProjectContext"
+
+import { createTask, fetchTasks } from "@/services/taskService"
+
+import type { Task } from "@/types/Task"
+
+import TaskBoardColumn from "@/components/task-management/TaskBoardColumn"
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+
+import {
+  Alert,
+  AlertDescription,
+} from "@/components/ui/alert"
+
+import { Button } from "@/components/ui/button"
+
+import { Input } from "@/components/ui/input"
+
+import { Label } from "@/components/ui/label"
+
+import { Textarea } from "@/components/ui/textarea"
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
+import { Loader2 } from "lucide-react"
 
 const STATUS_COLUMNS = [
-  { id: 'todo', label: 'To Do' },
-  { id: 'in_progress', label: 'In Progress' },
-  { id: 'completed', label: 'Completed' },
+  {
+    id: "todo",
+    label: "To Do",
+    className:
+      "border-blue-500/30 bg-blue-500/5",
+  },
+  {
+    id: "in_progress",
+    label: "In Progress",
+    className:
+      "border-amber-500/30 bg-amber-500/5",
+  },
+  {
+    id: "completed",
+    label: "Completed",
+    className:
+      "border-green-500/30 bg-green-500/5",
+  },
 ]
 
-const getColumnColor = (statusId: string) => {
-  switch (statusId) {
-    case 'todo':
-      return { borderColor: 'var(--status-blue)', backgroundColor: 'var(--status-blue-soft)' }
-    case 'in_progress':
-      return { borderColor: 'var(--status-orange)', backgroundColor: 'var(--status-orange-soft)' }
-    case 'completed':
-      return { borderColor: 'var(--status-green)', backgroundColor: 'var(--status-green-soft)' }
-    default:
-      return { borderColor: 'var(--status-gray)', backgroundColor: 'var(--status-gray-soft)' }
-  }
-}
-
 export default function TaskManagement() {
-  const { projects, loadProjects } = useProject()
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [isCreating, setIsCreating] = useState(false)
-  const [error, setError] = useState('')
-  const [createError, setCreateError] = useState('')
-  const [successMessage, setSuccessMessage] = useState('')
-  const [selectedProjectId, setSelectedProjectId] = useState<number | 'all'>('all')
-  const [newTaskProjectId, setNewTaskProjectId] = useState<number | ''>('')
-  const [newTaskTitle, setNewTaskTitle] = useState('')
-  const [newTaskDescription, setNewTaskDescription] = useState('')
-  const [newTaskPriority, setNewTaskPriority] = useState('High')
-  const [newTaskStatus, setNewTaskStatus] = useState('todo')
-  const [newTaskDueDate, setNewTaskDueDate] = useState('')
+  const { projects, loadProjects } =
+    useProject()
+
+  const [tasks, setTasks] = useState<
+    Task[]
+  >([])
+
+  const [isLoading, setIsLoading] =
+    useState(false)
+
+  const [isCreating, setIsCreating] =
+    useState(false)
+
+  const [error, setError] = useState("")
+  const [createError, setCreateError] =
+    useState("")
+
+  const [success, setSuccess] =
+    useState("")
+
+  const [
+    selectedProjectId,
+    setSelectedProjectId,
+  ] = useState<string>("all")
+
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    priority: "High",
+    status: "todo",
+    dueDate: "",
+    projectId: "",
+  })
+
+  const updateForm = (
+    key: keyof typeof form,
+    value: string
+  ) =>
+    setForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }))
+
+  const loadTasks = useCallback(
+    async () => {
+      setIsLoading(true)
+
+      try {
+        const data =
+          await fetchTasks()
+
+        setTasks(data)
+      } catch (err) {
+        setError(
+          (err as Error).message
+        )
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    []
+  )
 
   useEffect(() => {
     loadProjects()
     loadTasks()
-  }, [])
+  }, [loadProjects, loadTasks])
 
   useEffect(() => {
-    if (projects.length > 0 && !newTaskProjectId) {
-      setNewTaskProjectId(projects[0].id)
+    if (
+      projects.length > 0 &&
+      !form.projectId
+    ) {
+      updateForm(
+        "projectId",
+        String(projects[0].id)
+      )
     }
-  }, [projects, newTaskProjectId])
+  }, [projects, form.projectId])
 
-  const loadTasks = async () => {
-    setIsLoading(true)
-    setError('')
+  const filteredTasks = useMemo(
+    () =>
+      selectedProjectId === "all"
+        ? tasks
+        : tasks.filter(
+            (task) =>
+              task.project_id ===
+              Number(
+                selectedProjectId
+              )
+          ),
+    [tasks, selectedProjectId]
+  )
 
-    try {
-      const data = await fetchTasks()
-      setTasks(data)
-    } catch (err) {
-      setError((err as Error).message)
-      console.error('Failed to load tasks:', err)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const groupedTasks = useMemo(
+    () => ({
+      todo: filteredTasks.filter(
+        (t) => t.status === "todo"
+      ),
+      in_progress:
+        filteredTasks.filter(
+          (t) =>
+            t.status ===
+            "in_progress"
+        ),
+      completed:
+        filteredTasks.filter(
+          (t) =>
+            t.status ===
+            "completed"
+        ),
+    }),
+    [filteredTasks]
+  )
 
-  const handleStatusChange = (taskId: number, newStatus: string) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task) => (task.id === taskId ? { ...task, status: newStatus } : task))
+  const handleStatusChange = (
+    taskId: number,
+    status: string
+  ) => {
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId
+          ? { ...task, status }
+          : task
+      )
     )
   }
 
-  const filteredTasks =
-    selectedProjectId === 'all'
-      ? tasks
-      : tasks.filter((task) => task.project_id === selectedProjectId)
+  const handleCreateTask = async (
+    e: React.FormEvent
+  ) => {
+    e.preventDefault()
 
-  const getTasksByStatus = (status: string) => {
-    return filteredTasks.filter((task) => task.status === status)
-  }
+    setCreateError("")
+    setSuccess("")
 
-  const handleCreateTask = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setCreateError('')
-    setSuccessMessage('')
-
-    if (!newTaskTitle.trim() || !newTaskProjectId) {
-      setCreateError('Please provide a task title and select a project.')
+    if (
+      !form.title.trim() ||
+      !form.projectId
+    ) {
+      setCreateError(
+        "Task title and project are required."
+      )
       return
     }
 
     setIsCreating(true)
 
     try {
-      const createdTask = await createTask({
-        title: newTaskTitle.trim(),
-        description: newTaskDescription.trim(),
-        priority: newTaskPriority,
-        status: newTaskStatus,
-        due_date: newTaskDueDate || undefined,
-        project_id: newTaskProjectId,
-      })
+      const task =
+        await createTask({
+          title:
+            form.title.trim(),
+          description:
+            form.description.trim(),
+          priority:
+            form.priority,
+          status: form.status,
+          due_date:
+            form.dueDate ||
+            undefined,
+          project_id: Number(
+            form.projectId
+          ),
+        })
 
-      setTasks((prevTasks) => [createdTask, ...prevTasks])
-      setSuccessMessage('Task added successfully.')
-      setNewTaskTitle('')
-      setNewTaskDescription('')
-      setNewTaskPriority('High')
-      setNewTaskStatus('todo')
-      setNewTaskDueDate('')
+      setTasks((prev) => [
+        task,
+        ...prev,
+      ])
+
+      setSuccess(
+        "Task created successfully."
+      )
+
+      setForm((prev) => ({
+        ...prev,
+        title: "",
+        description: "",
+        dueDate: "",
+        priority: "High",
+        status: "todo",
+      }))
     } catch (err) {
-      setCreateError((err as Error).message)
+      setCreateError(
+        (err as Error).message
+      )
     } finally {
       setIsCreating(false)
     }
   }
 
   return (
-    <main className="page tasks-page">
-      <h1>Task Management</h1>
-      <p>Manage tasks with a Kanban board and add new work items directly.</p>
+    <main className="container mx-auto max-w-7xl space-y-8 py-8">
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">
+          Task Management
+        </h1>
 
-      <section className="ai-form-card">
-        <form onSubmit={handleCreateTask}>
-          <div className="form-grid">
-            <label>
-              Task Title
-              <input
-                value={newTaskTitle}
-                onChange={(event) => setNewTaskTitle(event.target.value)}
-                placeholder="Enter task title"
-              />
-            </label>
-
-            <label>
-              Project
-              <select
-                value={newTaskProjectId}
-                onChange={(event) => setNewTaskProjectId(Number(event.target.value))}
-              >
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Status
-              <select
-                value={newTaskStatus}
-                onChange={(event) => setNewTaskStatus(event.target.value)}
-              >
-                <option value="todo">To Do</option>
-                <option value="in_progress">In Progress</option>
-                <option value="completed">Completed</option>
-              </select>
-            </label>
-
-            <label>
-              Priority
-              <select
-                value={newTaskPriority}
-                onChange={(event) => setNewTaskPriority(event.target.value)}
-              >
-                <option value="High">High</option>
-                <option value="Medium">Medium</option>
-                <option value="Low">Low</option>
-              </select>
-            </label>
-          </div>
-
-          <label>
-            Due Date
-            <input
-              type="date"
-              value={newTaskDueDate}
-              onChange={(event) => setNewTaskDueDate(event.target.value)}
-            />
-          </label>
-
-          <label>
-            Description
-            <textarea
-              value={newTaskDescription}
-              onChange={(event) => setNewTaskDescription(event.target.value)}
-              placeholder="Task details and acceptance criteria"
-              rows={3}
-            />
-          </label>
-
-          <button type="submit" disabled={isCreating || projects.length === 0}>
-            {isCreating ? 'Adding task...' : 'Add Task'}
-          </button>
-
-          {createError && <div className="error-message">{createError}</div>}
-          {successMessage && <div className="result-card">{successMessage}</div>}
-        </form>
-      </section>
-
-      <div style={{ padding: '16px', backgroundColor: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', marginTop: '24px' }}>
-        <label htmlFor="project-filter" style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: 'var(--text-muted)', marginBottom: '12px' }}>
-          Filter by Project
-        </label>
-        <select
-          id="project-filter"
-          value={selectedProjectId}
-          onChange={(e) => setSelectedProjectId(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-          style={{ width: '100%', maxWidth: '300px' }}
-        >
-          <option value="all">All Projects</option>
-          {projects.map((project) => (
-            <option key={project.id} value={project.id}>
-              {project.name}
-            </option>
-          ))}
-        </select>
+        <p className="text-muted-foreground">
+          Manage tasks using a
+          Kanban board.
+        </p>
       </div>
 
-      {error && <div className="error-message" style={{ marginTop: '18px' }}>{error}</div>}
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            Create Task
+          </CardTitle>
 
-      {isLoading ? (
-        <LoadingSpinner message="Loading tasks..." size="medium" />
-      ) : (
-        <section className="kanban-board" style={{ marginTop: '24px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', paddingBottom: '32px' }}>
-            {STATUS_COLUMNS.map((column) => {
-              const columnTasks = getTasksByStatus(column.id)
-              const columnColor = getColumnColor(column.id)
+          <CardDescription>
+            Add a new work item
+          </CardDescription>
+        </CardHeader>
 
-              return (
-                <div
-                  key={column.id}
-                  style={{
-                    minHeight: '360px',
-                    padding: '18px',
-                    borderRadius: '12px',
-                    border: `2px solid ${columnColor.borderColor}`,
-                    backgroundColor: columnColor.backgroundColor,
-                    backdropFilter: 'blur(10px)',
-                  }}
+        <CardContent>
+          <form
+            onSubmit={
+              handleCreateTask
+            }
+            className="space-y-4"
+          >
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <Label>
+                  Title
+                </Label>
+
+                <Input
+                  value={
+                    form.title
+                  }
+                  onChange={(e) =>
+                    updateForm(
+                      "title",
+                      e.target
+                        .value
+                    )
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>
+                  Project
+                </Label>
+
+                <Select
+                  value={
+                    form.projectId
+                  }
+                  onValueChange={(
+                    value
+                  ) =>
+                    updateForm(
+                      "projectId",
+                      value
+                    )
+                  }
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
-                    <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--heading)', margin: 0 }}>{column.label}</h2>
-                    <span
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: '28px',
-                                height: '28px',
-                                borderRadius: '50%',
-                                backgroundColor: 'var(--status-gray-soft)',
-                                fontSize: '12px',
-                                fontWeight: 600,
-                                color: 'var(--text-muted)',
-                              }}
-                    >
-                      {columnTasks.length}
-                    </span>
-                  </div>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
 
-                  <div style={{ display: 'grid', gap: '14px' }}>
-                    {columnTasks.length === 0 ? (
-                      <div style={{ padding: '24px', textAlign: 'center' }}>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>No tasks in this column</p>
-                      </div>
-                    ) : (
-                      columnTasks.map((task) => (
-                        <div key={task.id} style={{ transition: 'all 0.3s ease' }}>
-                          <TaskCard task={task} onStatusChange={handleStatusChange} />
-                        </div>
-                      ))
+                  <SelectContent>
+                    {projects.map(
+                      (
+                        project
+                      ) => (
+                        <SelectItem
+                          key={
+                            project.id
+                          }
+                          value={String(
+                            project.id
+                          )}
+                        >
+                          {
+                            project.name
+                          }
+                        </SelectItem>
+                      )
                     )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </section>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>
+                  Status
+                </Label>
+
+                <Select
+                  value={
+                    form.status
+                  }
+                  onValueChange={(
+                    value
+                  ) =>
+                    updateForm(
+                      "status",
+                      value
+                    )
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    <SelectItem value="todo">
+                      To Do
+                    </SelectItem>
+
+                    <SelectItem value="in_progress">
+                      In Progress
+                    </SelectItem>
+
+                    <SelectItem value="completed">
+                      Completed
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>
+                  Priority
+                </Label>
+
+                <Select
+                  value={
+                    form.priority
+                  }
+                  onValueChange={(
+                    value
+                  ) =>
+                    updateForm(
+                      "priority",
+                      value
+                    )
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    <SelectItem value="High">
+                      High
+                    </SelectItem>
+
+                    <SelectItem value="Medium">
+                      Medium
+                    </SelectItem>
+
+                    <SelectItem value="Low">
+                      Low
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label>
+                Due Date
+              </Label>
+
+              <Input
+                type="date"
+                value={
+                  form.dueDate
+                }
+                onChange={(e) =>
+                  updateForm(
+                    "dueDate",
+                    e.target
+                      .value
+                  )
+                }
+              />
+            </div>
+
+            <div>
+              <Label>
+                Description
+              </Label>
+
+              <Textarea
+                rows={4}
+                value={
+                  form.description
+                }
+                onChange={(e) =>
+                  updateForm(
+                    "description",
+                    e.target
+                      .value
+                  )
+                }
+              />
+            </div>
+
+            {createError && (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  {
+                    createError
+                  }
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {success && (
+              <Alert>
+                <AlertDescription>
+                  {success}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <Button
+              type="submit"
+              disabled={
+                isCreating
+              }
+            >
+              {isCreating
+                ? "Creating..."
+                : "Create Task"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-6">
+          <Label>
+            Filter by Project
+          </Label>
+
+          <Select
+            value={
+              selectedProjectId
+            }
+            onValueChange={
+              setSelectedProjectId
+            }
+          >
+            <SelectTrigger className="mt-2 max-w-sm">
+              <SelectValue />
+            </SelectTrigger>
+
+            <SelectContent>
+              <SelectItem value="all">
+                All Projects
+              </SelectItem>
+
+              {projects.map(
+                (project) => (
+                  <SelectItem
+                    key={
+                      project.id
+                    }
+                    value={String(
+                      project.id
+                    )}
+                  >
+                    {
+                      project.name
+                    }
+                  </SelectItem>
+                )
+              )}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
       )}
 
-      {!isLoading && filteredTasks.length === 0 && !error && (
-        <div style={{ padding: '32px', textAlign: 'center' }}>
-          <p style={{ color: 'var(--text-muted)', fontSize: '18px', margin: 0 }}>No tasks found. Use the form above to add a new task.</p>
-        </div>
+      {isLoading ? (
+        <Card>
+          <CardContent className="flex items-center gap-3 py-8">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            Loading tasks...
+          </CardContent>
+        </Card>
+      ) : (
+        <section className="grid gap-6 lg:grid-cols-3">
+          {STATUS_COLUMNS.map((column) => {
+            const tasks = groupedTasks[column.id as keyof typeof groupedTasks]
+
+            return (
+              <TaskBoardColumn
+                key={column.id}
+                id={column.id}
+                label={column.label}
+                className={column.className}
+                tasks={tasks}
+                onStatusChange={handleStatusChange}
+              />
+            )
+          })}
+        </section>
       )}
     </main>
   )

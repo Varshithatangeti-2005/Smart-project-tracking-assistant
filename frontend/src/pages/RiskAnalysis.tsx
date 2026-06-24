@@ -1,7 +1,7 @@
-import { FormEvent, useEffect, useState } from 'react'
-import { useProject } from '../context/ProjectContext'
-import LoadingSpinner from '../components/LoadingSpinner/LoadingSpinner'
+import { useState, useEffect } from 'react'
+import { useProject } from '@/context/ProjectContext'
 import { riskAnalysis } from '../services/aiService'
+import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner'
 
 export default function RiskAnalysis() {
   const { projects, loadProjects } = useProject()

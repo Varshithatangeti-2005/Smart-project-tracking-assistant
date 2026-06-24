@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react'
+import { useState } from 'react'
 import { taskEstimation } from '../services/aiService'
 
 export default function TaskEstimation() {
@@ -11,7 +11,7 @@ export default function TaskEstimation() {
   const [result, setResult] = useState<null | { min_hours: number; max_hours: number; difficulty: string; confidence?: string; reasoning?: string; notes?: string }>(null)
   const [error, setError] = useState('')
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.SubmitEvent) => {
     event.preventDefault()
     setError('')
     setResult(null)

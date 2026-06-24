@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta
 import google.generativeai as genai
 from fastapi import HTTPException
-
 from app.config import settings
 from app.schemas.ai import (
     SprintPlanningRequest,

@@ -2,6 +2,7 @@ fastapi
 uvicorn[standard]
 mysql-connector-python
 python-dotenv
-passlib[bcrypt]
+pwdlib[argon2]
 python-jose[cryptography]
 pydantic-settings
+email-validator
