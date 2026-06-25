@@ -22,7 +22,7 @@ export default function AppRoutes() {
           <Sidebar />
           <SidebarInset>
             <header className="sticky w-full top-0 z-20 flex h-14 items-center gap-2 border-b bg-background/95 px-3 backdrop-blur supports-backdrop-filter:bg-background/75 md:px-4">
-              <SidebarTrigger className="md:hidden" />
+              <SidebarTrigger className="inline-flex" />
               <Navbar />
             </header>
 
