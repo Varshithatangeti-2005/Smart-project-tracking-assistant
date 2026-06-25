@@ -12,6 +12,7 @@ import TaskEstimation from './pages/TaskEstimation'
 import TaskManagement from './pages/TaskManagement'
 import RiskAnalysis from './pages/RiskAnalysis'
 import WorkloadDistribution from './pages/WorkloadDistribution'
+import Profile from './pages/Profile'
 
 export default function AppRoutes() {
   return (
@@ -85,14 +86,14 @@ export default function AppRoutes() {
                     </ProtectedRoute>
                   }
                 />
-                {/* <Route
+                <Route
                   path="/profile"
                   element={
                     <ProtectedRoute>
                       <Profile />
                     </ProtectedRoute>
                   }
-                /> */}
+                />
               </Routes>
             </main>
           </SidebarInset>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { KanbanIcon, PlusIcon } from "@phosphor-icons/react"
+import useDocumentMetadata from "@/hooks/useDocumentMetadata"
 
 import { useProject } from "../context/ProjectContext"
 import type { Project } from "../types/Project"
@@ -11,6 +12,11 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
 export default function Projects() {
+  useDocumentMetadata({
+    title: "Manage Projects",
+    description: "Create and track all your active projects, timelines, and backlogs."
+  })
+
   const { projects, loadProjects, createProject } = useProject()
 
   const [isCreating, setIsCreating] = useState(false)

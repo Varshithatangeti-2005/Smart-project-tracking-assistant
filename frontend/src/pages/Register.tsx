@@ -1,7 +1,8 @@
 import { useState, useCallback } from "react"
 import type { FormEvent } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, Navigate } from "react-router-dom"
 import { UserPlusIcon } from "@phosphor-icons/react"
+import useDocumentMetadata from "@/hooks/useDocumentMetadata"
 
 import { useAuth } from "@/context/AuthContext"
 
@@ -24,32 +25,37 @@ const passwordRules = [
   {
     id: "length",
     label: "At least 8 characters",
-    test: (value: string) => value.length >= 8,
+    test: (pw: string) => pw.length >= 8,
   },
   {
     id: "uppercase",
-    label: "One uppercase letter",
-    test: (value: string) => /[A-Z]/.test(value),
+    label: "At least one uppercase letter",
+    test: (pw: string) => /[A-Z]/.test(pw),
   },
   {
     id: "lowercase",
-    label: "One lowercase letter",
-    test: (value: string) => /[a-z]/.test(value),
+    label: "At least one lowercase letter",
+    test: (pw: string) => /[a-z]/.test(pw),
   },
   {
     id: "number",
-    label: "One number",
-    test: (value: string) => /[0-9]/.test(value),
+    label: "At least one number",
+    test: (pw: string) => /[0-9]/.test(pw),
   },
   {
     id: "special",
-    label: "One special character",
-    test: (value: string) => /[^A-Za-z0-9]/.test(value),
+    label: "At least one special character",
+    test: (pw: string) => /[^A-Za-z0-9]/.test(pw),
   },
 ]
 
 export default function Register() {
-  const { register } = useAuth()
+  useDocumentMetadata({
+    title: "Create Account",
+    description: "Sign up to track backlogs, sprints, and workload allocations with AI."
+  })
+
+  const { token, register } = useAuth()
   const navigate = useNavigate()
 
   const [isLoading, setIsLoading] = useState(false)
@@ -88,18 +94,33 @@ export default function Register() {
         })
 
         navigate("/login")
-      } catch (err: any) {
-        setError(
-          err?.response?.data?.detail ||
-            err?.message ||
-            "Registration failed. Please try again."
-        )
+      } catch (err: unknown) {
+        let errorMsg = "Registration failed. Please try again."
+        if (err && typeof err === "object") {
+          const e = err as {
+            response?: {
+              data?: {
+                detail?: string
+              }
+            }
+            message?: string
+          }
+          errorMsg =
+            e.response?.data?.detail ||
+            e.message ||
+            errorMsg
+        }
+        setError(errorMsg)
       } finally {
         setIsLoading(false)
       }
     },
     [form, register, navigate, isPasswordValid]
   )
+
+  if (token) {
+    return <Navigate to="/" replace />
+  }
 
   return (
     <main className="flex min-h-[calc(100vh-5rem)] items-center justify-center bg-background px-4">

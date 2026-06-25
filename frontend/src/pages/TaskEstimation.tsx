@@ -1,128 +1,138 @@
-import { useState } from 'react'
-import { taskEstimation } from '../services/aiService'
+import { useState, useCallback } from "react"
+import { taskEstimation } from "@/services/aiService"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Card, CardContent } from "@/components/ui/card"
+import { Loader2 } from "lucide-react"
+import TaskEstimationForm from "@/components/TaskEstimationForm"
+import TaskEstimationResult from "@/components/TaskEstimationResult"
+import useDocumentMetadata from "@/hooks/useDocumentMetadata"
+
+type EstimationResult = Awaited<ReturnType<typeof taskEstimation>>
+
+type Status = "idle" | "loading" | "success" | "error"
+
+interface FormData {
+  taskName: string
+  description: string
+  priority: string
+  deadlineDays: number
+  experience: string
+  factors: string
+}
 
 export default function TaskEstimation() {
-  const [taskName, setTaskName] = useState('')
-  const [description, setDescription] = useState('')
-  const [priority, setPriority] = useState('Normal')
-  const [deadlineDays, setDeadlineDays] = useState(7)
-  const [experience, setExperience] = useState('Intermediate')
-  const [factors, setFactors] = useState('')
-  const [result, setResult] = useState<null | { min_hours: number; max_hours: number; difficulty: string; confidence?: string; reasoning?: string; notes?: string }>(null)
-  const [error, setError] = useState('')
+  useDocumentMetadata({
+    title: "Task Effort Estimation",
+    description: "Calculate estimated development effort ranges based on complexity and experience factors."
+  })
 
-  const handleSubmit = async (event: React.SubmitEvent) => {
-    event.preventDefault()
-    setError('')
+  const [status, setStatus] = useState<Status>("idle")
+  const [result, setResult] = useState<EstimationResult | null>(null)
+  const [error, setError] = useState("")
+
+  const handleEstimateSubmit = useCallback(async (formData: FormData) => {
+    setStatus("loading")
+    setError("")
     setResult(null)
 
     try {
-      const complexityFactors = factors
-        .split('\n')
+      const complexityFactors = formData.factors
+        .split("\n")
         .map((factor) => factor.trim())
         .filter(Boolean)
 
       const response = await taskEstimation({
-        task_name: taskName || 'New task',
-        task_description: description,
-        priority,
-        deadline_days: deadlineDays,
-        team_experience_level: experience,
+        task_name: formData.taskName.trim() || "New Task",
+        task_description: formData.description,
+        priority: formData.priority,
+        deadline_days: formData.deadlineDays,
+        team_experience_level: formData.experience,
         complexity_factors: complexityFactors,
       })
 
       setResult(response)
+      setStatus("success")
     } catch (err) {
-      setError((err as Error).message)
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to generate estimation"
+      )
+      setStatus("error")
+    }
+  }, [])
+
+  const renderContent = () => {
+    switch (status) {
+      case "loading":
+        return (
+          <Card className="relative overflow-hidden border-primary/20 bg-primary/5 shadow-md">
+            <div className="absolute inset-x-0 top-0 h-1 animate-pulse bg-gradient-to-r from-primary/40 via-primary to-primary/40" />
+            <CardContent className="flex flex-col items-center justify-center gap-4 py-12 text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <div className="space-y-1">
+                <p className="text-base font-semibold">
+                  Calculating Estimates
+                </p>
+                <p className="max-w-sm text-sm text-muted-foreground">
+                  AI is reviewing task complexity, constraints, and effort
+                  estimates...
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )
+
+      case "success":
+        return result ? <TaskEstimationResult result={result} /> : null
+
+      default:
+        return (
+          <Card className="flex h-[300px] items-center justify-center border-dashed border-muted-foreground/20 bg-muted/5">
+            <CardContent className="space-y-2 py-10 text-center">
+              <p className="text-sm font-medium text-muted-foreground">
+                No Estimation Report Generated Yet
+              </p>
+              <p className="mx-auto max-w-xs text-xs text-muted-foreground/60">
+                Configure the parameters and click "Estimate Effort" to generate
+                a report.
+              </p>
+            </CardContent>
+          </Card>
+        )
     }
   }
 
   return (
-    <main className="page task-estimation-page">
-      <h1>Task Estimation</h1>
-      <p>Use AI to estimate effort and difficulty for a task.</p>
+    <main className="container mx-auto max-w-7xl space-y-8 px-4 py-8 md:px-8">
+      <header>
+        <h1 className="text-3xl font-extrabold tracking-tight">
+          Task Effort Estimation
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Estimate project tasks using AI and generate effort ranges based on
+          complexity and team factors.
+        </p>
+      </header>
 
-      <section className="ai-form-card">
-        <form onSubmit={handleSubmit}>
-          <label>
-            Task Name
-            <input value={taskName} onChange={(event) => setTaskName(event.target.value)} placeholder="Task name" />
-          </label>
-          <label>
-            Description
-            <textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Describe the task" />
-          </label>
-          <label>
-            Priority
-            <select value={priority} onChange={(event) => setPriority(event.target.value)}>
-              <option value="Low">Low</option>
-              <option value="Normal">Normal</option>
-              <option value="High">High</option>
-            </select>
-          </label>
-          <label>
-            Deadline (days)
-            <input type="number" value={deadlineDays} onChange={(event) => setDeadlineDays(Number(event.target.value))} min={1} />
-          </label>
-          <label>
-            Team experience
-            <select value={experience} onChange={(event) => setExperience(event.target.value)}>
-              <option value="Junior">Junior</option>
-              <option value="Intermediate">Intermediate</option>
-              <option value="Senior">Senior</option>
-            </select>
-          </label>
-          <label>
-            Complexity factors (one per line)
-            <textarea value={factors} onChange={(event) => setFactors(event.target.value)} placeholder="Third-party integration\nUnknown API complexity" />
-          </label>
-          <button type="submit">Estimate Task</button>
-        </form>
+      <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
+        <div className="lg:flex-[5]">
+          <TaskEstimationForm
+            onSubmit={handleEstimateSubmit}
+            loading={status === "loading"}
+          />
+        </div>
 
-        {error && <div className="error-message">{error}</div>}
+        <div className="space-y-4 lg:flex-[7]">
+          {status === "error" && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-        {result && (
-          <div className="result-card">
-            <h2>Estimation Result</h2>
-            <div style={{ marginBottom: '16px' }}>
-              <strong>Estimated Hours</strong>
-              <pre style={{ backgroundColor: '#f5f5f5', padding: '8px', borderRadius: '4px', marginTop: '4px' }}>
-                {result.min_hours}-{result.max_hours} Hours
-              </pre>
-            </div>
-            <div style={{ marginBottom: '16px' }}>
-              <strong>Difficulty</strong>
-              <pre style={{ backgroundColor: '#f5f5f5', padding: '8px', borderRadius: '4px', marginTop: '4px' }}>
-                {result.difficulty}
-              </pre>
-            </div>
-            {result.confidence && (
-              <div style={{ marginBottom: '16px' }}>
-                <strong>Confidence</strong>
-                <pre style={{ backgroundColor: '#f5f5f5', padding: '8px', borderRadius: '4px', marginTop: '4px' }}>
-                  {result.confidence}
-                </pre>
-              </div>
-            )}
-            {result.reasoning && (
-              <div style={{ marginBottom: '16px' }}>
-                <strong>Reasoning</strong>
-                <pre style={{ backgroundColor: '#f5f5f5', padding: '8px', borderRadius: '4px', marginTop: '4px', whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
-                  {result.reasoning}
-                </pre>
-              </div>
-            )}
-            {result.notes && (
-              <div>
-                <strong>Notes</strong>
-                <pre style={{ backgroundColor: '#f5f5f5', padding: '8px', borderRadius: '4px', marginTop: '4px', whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
-                  {result.notes}
-                </pre>
-              </div>
-            )}
-          </div>
-        )}
-      </section>
+          {renderContent()}
+        </div>
+      </div>
     </main>
   )
 }

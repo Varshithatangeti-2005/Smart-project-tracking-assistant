@@ -1,185 +1,149 @@
-import { useState, useEffect } from 'react'
-import { useProject } from '@/context/ProjectContext'
-import { riskAnalysis } from '../services/aiService'
-import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner'
+import { useState, useCallback } from 'react'
+import { riskAnalysis } from '@/services/aiService'
+import RiskAnalysisForm from '@/components/RiskAnalysisForm'
+import RiskAnalysisResult from '@/components/RiskAnalysisResult'
+import { Card, CardContent } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Loader2 } from "lucide-react"
+import useDocumentMetadata from '@/hooks/useDocumentMetadata'
+
+type AnalysisResult = Awaited<ReturnType<typeof riskAnalysis>>
+
+type Status = "idle" | "loading" | "success" | "error"
+
+interface AnalysisMetadata {
+  projectName: string
+  deadlineDays: number
+  pendingTasks: number
+  developers: number
+  currentPhase: string
+}
 
 export default function RiskAnalysis() {
-  const { projects, loadProjects } = useProject()
-  const [selectedProjectId, setSelectedProjectId] = useState<number | ''>('')
-  const [deadlineDays, setDeadlineDays] = useState(14)
-  const [pendingTasks, setPendingTasks] = useState(10)
-  const [developers, setDevelopers] = useState(3)
-  const [blockers, setBlockers] = useState('')
-  const [technicalDebt, setTechnicalDebt] = useState('')
-  const [currentPhase, setCurrentPhase] = useState('Planning')
-  const [result, setResult] = useState<null | { risk_level: string; top_risks: string[]; mitigation_actions: string[]; confidence?: string }>(null)
-  const [error, setError] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  useDocumentMetadata({
+    title: "Project Risk Analysis",
+    description: "Evaluate deadlines, developers, and technical blockers to forecast project risks and mitigations."
+  })
 
-  useEffect(() => {
-    loadProjects()
-  }, [loadProjects])
+  const [status, setStatus] = useState<Status>("idle")
+  const [result, setResult] = useState<AnalysisResult | null>(null)
+  const [metadata, setMetadata] = useState<AnalysisMetadata | null>(null)
+  const [error, setError] = useState("")
 
-  const selectedProject = projects.find((p) => p.id === selectedProjectId)
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setError('')
+  const handleSubmit = useCallback(async (formData: {
+    projectId: number
+    projectName: string
+    deadlineDays: number
+    pendingTasks: number
+    developers: number
+    blockers: string
+    technicalDebt: string
+    currentPhase: string
+  }) => {
+    setStatus("loading")
+    setError("")
     setResult(null)
-    setIsLoading(true)
+    setMetadata({
+      projectName: formData.projectName,
+      deadlineDays: formData.deadlineDays,
+      pendingTasks: formData.pendingTasks,
+      developers: formData.developers,
+      currentPhase: formData.currentPhase
+    })
 
     try {
-      const projectName = selectedProject?.name || 'Project X'
+      const blockersList = formData.blockers
+        ? formData.blockers.split("\n").map((b) => b.trim()).filter(Boolean)
+        : undefined
 
       const response = await riskAnalysis({
-        project_name: projectName,
-        deadline_days: deadlineDays,
-        pending_tasks: pendingTasks,
-        developers,
-        blockers: blockers ? blockers.split('\n').map((item) => item.trim()).filter(Boolean) : undefined,
-        technical_debt: technicalDebt || undefined,
-        current_phase: currentPhase,
+        project_name: formData.projectName,
+        deadline_days: formData.deadlineDays,
+        pending_tasks: formData.pendingTasks,
+        developers: formData.developers,
+        blockers: blockersList,
+        technical_debt: formData.technicalDebt || undefined,
+        current_phase: formData.currentPhase
       })
 
       setResult(response)
+      setStatus("success")
     } catch (err) {
-      setError((err as Error).message)
-    } finally {
-      setIsLoading(false)
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to generate risk analysis"
+      )
+      setStatus("error")
+    }
+  }, [])
+
+  const handleReset = useCallback(() => {
+    setStatus("idle")
+    setResult(null)
+    setMetadata(null)
+    setError("")
+  }, [])
+
+  const renderContent = () => {
+    switch (status) {
+      case "loading":
+        return (
+          <Card className="relative overflow-hidden border-primary/20 bg-primary/5 shadow-md">
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/40 via-primary to-primary/40 animate-pulse" />
+            <CardContent className="flex flex-col items-center justify-center gap-4 py-12 text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <div className="space-y-1">
+                <p className="text-base font-semibold text-foreground">
+                  Running Risk Analysis
+                </p>
+                <p className="max-w-sm text-xs text-muted-foreground">
+                  AI is evaluating project constraints, blockers, and technical debt parameters...
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )
+
+      case "success":
+        return result ? (
+          <RiskAnalysisResult
+            result={result}
+            metadata={metadata || undefined}
+            onReset={handleReset}
+          />
+        ) : null
+
+      default:
+        return (
+          <RiskAnalysisForm
+            onSubmit={handleSubmit}
+            loading={false}
+          />
+        )
     }
   }
 
   return (
-    <main className="page risk-page">
-      <h1>Risk Analysis</h1>
-      <p>Identify and manage risks for your projects and sprints.</p>
+    <main className="container mx-auto max-w-7xl space-y-8 px-4 py-8 md:px-8 animate-in fade-in-50 duration-300">
+      <header>
+        <h1 className="text-3xl font-extrabold tracking-tight text-foreground animate-in slide-in-from-top-2 duration-300">
+          Project Risk Analysis
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground animate-in slide-in-from-top-2 duration-400">
+          Identify threat levels, key project risks, and recommend mitigations dynamically using machine intelligence.
+        </p>
+      </header>
 
-      <section className="ai-form-card">
-        <form onSubmit={handleSubmit}>
-          <div className="form-grid">
-            <label htmlFor="project-select">
-              Project Name
-              <select
-                id="project-select"
-                value={selectedProjectId}
-                onChange={(event) => setSelectedProjectId(event.target.value ? Number(event.target.value) : '')}
-              >
-                <option value="">Select a project...</option>
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label htmlFor="phase">
-              Current Phase
-              <select
-                id="phase"
-                value={currentPhase}
-                onChange={(event) => setCurrentPhase(event.target.value)}
-              >
-                <option value="Planning">Planning</option>
-                <option value="Development">Development</option>
-                <option value="Testing">Testing</option>
-                <option value="Deployment">Deployment</option>
-              </select>
-            </label>
-
-            <label htmlFor="deadline">
-              Deadline (days)
-              <input
-                id="deadline"
-                type="number"
-                value={deadlineDays}
-                onChange={(event) => setDeadlineDays(Number(event.target.value))}
-                min={1}
-              />
-            </label>
-
-            <label htmlFor="pending-tasks">
-              Pending Tasks
-              <input
-                id="pending-tasks"
-                type="number"
-                value={pendingTasks}
-                onChange={(event) => setPendingTasks(Number(event.target.value))}
-                min={0}
-              />
-            </label>
-
-            <label htmlFor="developers">
-              Developers
-              <input
-                id="developers"
-                type="number"
-                value={developers}
-                onChange={(event) => setDevelopers(Number(event.target.value))}
-                min={1}
-              />
-            </label>
-          </div>
-
-          <label htmlFor="blockers">
-            Blockers (one per line)
-            <textarea
-              id="blockers"
-              value={blockers}
-              onChange={(event) => setBlockers(event.target.value)}
-              placeholder="Blocked by API, delayed dependencies"
-              rows={3}
-            />
-          </label>
-
-          <label htmlFor="tech-debt">
-            Technical Debt Notes
-            <textarea
-              id="tech-debt"
-              value={technicalDebt}
-              onChange={(event) => setTechnicalDebt(event.target.value)}
-              placeholder="Known technical debt"
-              rows={3}
-            />
-          </label>
-
-          <button
-            type="submit"
-            disabled={isLoading || !selectedProjectId}
-            style={{
-              width: '100%',
-              opacity: isLoading || !selectedProjectId ? 0.6 : 1,
-              cursor: isLoading || !selectedProjectId ? 'not-allowed' : 'pointer',
-            }}
-          >
-            {isLoading ? 'Analyzing...' : 'Analyze Risk'}
-          </button>
-        </form>
-
-        {error && <div className="error-message">{error}</div>}
-
-        {isLoading && <LoadingSpinner message="AI Assistant is analyzing project risks..." size="medium" />}
-
-        {result && !isLoading && (
-          <div className="result-card">
-            <h2>Risk Summary</h2>
-            <p>Risk level: {result.risk_level}</p>
-            {result.confidence && <p>Confidence: {result.confidence}</p>}
-            <h3>Top Risks</h3>
-            <ul>
-              {result.top_risks.map((risk, index) => (
-                <li key={index}>⚠️ {risk}</li>
-              ))}
-            </ul>
-            <h3>Mitigation Actions</h3>
-            <ul>
-              {result.mitigation_actions.map((action, index) => (
-                <li key={index}>✓ {action}</li>
-              ))}
-            </ul>
-          </div>
+      <div className="space-y-4">
+        {status === "error" && (
+          <Alert variant="destructive" className="animate-in fade-in-50 slide-in-from-top-1">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
-      </section>
+
+        {renderContent()}
+      </div>
     </main>
   )
 }

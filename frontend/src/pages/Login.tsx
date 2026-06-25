@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, Navigate } from "react-router-dom"
 import { SignInIcon } from "@phosphor-icons/react"
+import useDocumentMetadata from "@/hooks/useDocumentMetadata"
 
 import { useAuth } from "@/context/AuthContext"
 
@@ -14,9 +15,13 @@ import {
 } from "@/components/ui/alert"
 
 export default function Login() {
-  const { login } = useAuth()
-  const navigate = useNavigate()
+  useDocumentMetadata({
+    title: "Sign In",
+    description: "Login to access your smart project tracking assistant."
+  })
 
+  const { token, login } = useAuth()
+  const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
 
   const [form, setForm] = useState({
@@ -51,6 +56,10 @@ export default function Login() {
     },
     [form, login, navigate]
   )
+
+  if (token) {
+    return <Navigate to="/" replace />
+  }
 
   return (
     <main className="flex min-h-[calc(100vh-5rem)] items-center justify-center bg-background px-4">

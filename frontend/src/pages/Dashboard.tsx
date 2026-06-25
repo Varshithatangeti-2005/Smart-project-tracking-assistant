@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { useProject } from "../context/ProjectContext"
+import useDocumentMetadata from "@/hooks/useDocumentMetadata"
 
 import {
   Card,
@@ -33,6 +34,11 @@ function isSprintActive(sprint: Sprint): boolean {
 }
 
 export default function Dashboard() {
+  useDocumentMetadata({
+    title: "Dashboard",
+    description: "Overview of your smart project management workspace, active projects, tasks, and sprint progress."
+  })
+
   const { projects, loadProjects } = useProject()
 
   const [tasks, setTasks] = useState<Task[]>([])

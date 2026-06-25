@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { useProject } from "@/context/ProjectContext"
+import useDocumentMetadata from "@/hooks/useDocumentMetadata"
 
 import { createTask, fetchTasks } from "@/services/taskService"
 
@@ -22,7 +23,6 @@ import {
 } from "@/components/ui/alert"
 
 import { Button } from "@/components/ui/button"
-
 import { Input } from "@/components/ui/input"
 
 import { Label } from "@/components/ui/label"
@@ -61,6 +61,11 @@ const STATUS_COLUMNS = [
 ]
 
 export default function TaskManagement() {
+  useDocumentMetadata({
+    title: "Task Backlog & Board",
+    description: "Organize project tasks, edit status updates, and manage developer assignments."
+  })
+
   const { projects, loadProjects } =
     useProject()
 
