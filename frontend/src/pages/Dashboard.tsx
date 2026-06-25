@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { useProject } from "../context/ProjectContext"
+import { useAuth } from "@/context/AuthContext"
 import useDocumentMetadata from "@/hooks/useDocumentMetadata"
 
 import {
@@ -40,6 +41,7 @@ export default function Dashboard() {
   })
 
   const { projects, loadProjects } = useProject()
+  const { user } = useAuth()
 
   const [tasks, setTasks] = useState<Task[]>([])
   const [sprints, setSprints] = useState<Sprint[]>([])
@@ -74,15 +76,28 @@ export default function Dashboard() {
     (task) => task.status !== "completed"
   ).length
 
+  const getGreeting = () => {
+    const hour = new Date().getHours()
+
+    if (hour < 12) return "Good morning"
+    if (hour < 18) return "Good afternoon"
+    return "Good evening"
+  }
+
+  const greeting = getGreeting()
+  const displayName = user?.full_name ?? user?.email ?? "there"
+
   return (
     <main className="min-h-screen bg-background text-foreground p-6">
       <div className="mx-auto max-w-7xl space-y-8">
         <section>
           <h1 className="text-3xl font-bold tracking-tight">
-            Dashboard
+            {user ? `Hey! ${greeting} ${displayName}` : "Dashboard"}
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Monitor projects, sprints, and task progress.
+            {user
+              ? "Welcome back to your smart project tracking workspace."
+              : "Monitor projects, sprints, and task progress."}
           </p>
         </section>
 

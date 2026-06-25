@@ -55,14 +55,14 @@ export default function Sidebar() {
 						<SidebarMenuButton asChild size="lg" isActive={location.pathname === "/"}>
 							<Link to="/">
 								<SquaresFourIcon className="size-4" />
-								<span>Smart PM</span>
+								<span><b>Smart Project Tracking Assistant</b></span>
 							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 				</SidebarMenu>
 			</SidebarHeader>
 
-			<SidebarSeparator />
+			{/* <SidebarSeparator /> */}
 
 			<SidebarContent>
 				<SidebarGroup>
@@ -97,7 +97,7 @@ export default function Sidebar() {
 				</SidebarGroup>
 			</SidebarContent>
 
-			<SidebarSeparator />
+			{/* <SidebarSeparator /> */}
 
 			<SidebarFooter>
 				<SidebarMenu>

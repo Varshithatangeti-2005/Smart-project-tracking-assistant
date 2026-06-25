@@ -11,14 +11,14 @@ import { useThemeConfig } from "./ui/active-theme";
 
 const THEMES = [
   { name: "Default", value: "default" },
-  {
-    name: "Blue",
-    value: "blue",
-  },
-  {
-    name: "Dark Blue",
-    value: "dark-blue",
-  },
+  { name: "Ocean Breeze", value: "blue" },
+  { name: "Midnight Navy", value: "dark-blue" },
+  { name: "Rose Garden", value: "rose" },
+  { name: "Sunset Glow", value: "sunset" },
+  { name: "Forest Mist", value: "forest" },
+  { name: "Mint Frost", value: "mint" },
+  { name: "Slate Calm", value: "slate" },
+  { name: "Lavender Haze", value: "lavender" },
 ] as const;
 
 export default function ThemeChanger({
@@ -36,8 +36,14 @@ export default function ThemeChanger({
   const getThemeColorClass = (themeValue: string): string => {
     const themeColors: Record<string, string> = {
       default: "bg-gray-500",
-      blue: "bg-blue-500",
+      blue: "bg-sky-500",
       "dark-blue": "bg-blue-700",
+      rose: "bg-rose-500",
+      sunset: "bg-orange-400",
+      forest: "bg-emerald-500",
+      mint: "bg-teal-400",
+      slate: "bg-slate-500",
+      lavender: "bg-violet-400",
     };
     return themeColors[themeValue] || "bg-gray-500";
   };

@@ -48,7 +48,7 @@ export default function TaskEstimationForm({
   }
 
   return (
-    <Card className="shadow-lg border-muted/50">
+    <Card className="sticky top-4 shadow-lg border-muted/50">
       <CardHeader className="bg-muted/10 pb-4 border-b border-muted/20">
         <CardTitle className="text-xl font-bold tracking-tight">
           Configure Estimation Parameters

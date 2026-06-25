@@ -1,6 +1,7 @@
 import { useAuth } from "@/context/AuthContext"
 import { useProject } from "@/context/ProjectContext"
 import { useThemeConfig } from "@/components/ui/active-theme"
+import { useTheme } from "@/context/ThemeProvider"
 import useDocumentMetadata from "@/hooks/useDocumentMetadata"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -26,6 +27,7 @@ export default function Profile() {
 
   const { user, logout } = useAuth()
   const { projects } = useProject()
+  const { theme, setTheme } = useTheme()
   const { activeTheme, setActiveTheme } = useThemeConfig()
 
   if (!user) {
@@ -69,13 +71,49 @@ export default function Profile() {
       name: "Ocean Breeze (Blue)",
       value: "blue",
       desc: "Cool slate and maritime blue highlight system",
-      colorClass: "bg-blue-600 border-blue-500",
+      colorClass: "bg-sky-600 border-sky-500",
     },
     {
       name: "Midnight Navy (Dark Blue)",
       value: "dark-blue",
       desc: "Deep atmospheric blue ideal for dark setups",
       colorClass: "bg-blue-950 border-blue-800",
+    },
+    {
+      name: "Rose Garden",
+      value: "rose",
+      desc: "Soft pink highlights with a warm, elegant feel",
+      colorClass: "bg-rose-500 border-rose-400",
+    },
+    {
+      name: "Sunset Glow",
+      value: "sunset",
+      desc: "Warm orange tones for vibrant dashboards",
+      colorClass: "bg-orange-500 border-orange-400",
+    },
+    {
+      name: "Forest Mist",
+      value: "forest",
+      desc: "Natural green accents with soft, earthy contrast",
+      colorClass: "bg-emerald-600 border-emerald-500",
+    },
+    {
+      name: "Mint Frost",
+      value: "mint",
+      desc: "Fresh minty greens for a calm workspace",
+      colorClass: "bg-teal-500 border-teal-400",
+    },
+    {
+      name: "Slate Calm",
+      value: "slate",
+      desc: "Subtle slate hues for a modern, muted UI",
+      colorClass: "bg-slate-600 border-slate-500",
+    },
+    {
+      name: "Lavender Haze",
+      value: "lavender",
+      desc: "Soft purple highlights with a serene visual tone",
+      colorClass: "bg-violet-500 border-violet-400",
     },
   ] as const
 
@@ -296,6 +334,33 @@ export default function Profile() {
                     )
                   })}
                 </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="font-semibold text-foreground text-xs">Adjust theme mode</Label>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {[
+                    { label: "System", value: "system" },
+                    { label: "Light", value: "light" },
+                    { label: "Dark", value: "dark" },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setTheme(option.value as "system" | "light" | "dark")}
+                      className={`rounded-md border px-4 py-3 text-left text-xs font-semibold transition-all duration-200 ${
+                        theme === option.value
+                          ? "border-primary bg-primary/10 text-foreground"
+                          : "border-muted/50 bg-card text-muted-foreground"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Overrides system mode to force light or dark UI across the site.
+                </p>
               </div>
             </CardContent>
           </Card>

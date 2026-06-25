@@ -123,7 +123,7 @@ export default function TaskEstimation() {
           />
         </div>
 
-        <div className="space-y-4 lg:flex-[7]">
+        <div className="space-y-4 lg:flex-[7] lg:sticky lg:top-24 lg:self-start">
           {status === "error" && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
