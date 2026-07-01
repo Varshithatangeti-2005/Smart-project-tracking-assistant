@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 fastapi
 uvicorn[standard]
 mysql-connector-python
@@ -6,3 +7,27 @@ pwdlib[argon2]
 python-jose[cryptography]
 pydantic-settings
 email-validator
+=======
+# Core Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Database
+mysql-connector-python==8.2.0
+
+# Environment & Configuration
+python-dotenv==1.0.0
+pydantic-settings==2.1.0
+
+# Security & Authentication
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.3.0
+
+# AI/ML Integration
+google-generativeai==0.3.5
+
+# Testing (optional but recommended)
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.2
+>>>>>>> 1c553e114aeae0e2a16e4b97182ad15870cd1bc7
