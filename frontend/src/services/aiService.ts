@@ -55,7 +55,7 @@ export function workloadDistribution(payload: {
   team: Record<string, number>
   tasks: { title: string; priority?: string; estimated_hours?: number }[]
 }) {
-  return request<{ assignments: { task: string; assignee: string; estimated_hours: number }[]; balance_score?: string }>(
+  return request<{ assignments: { task: string; assignee: string; estimated_hours: number }[]; balance_score?: number }>(
     '/ai/workload-distribution',
     {
       method: 'POST',

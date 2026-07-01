@@ -1,3 +1,20 @@
+# Environment files
 .env
+.env.*
 backend/.env
 frontend/.env
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Log files
+*.log
+logs/

@@ -23,6 +23,11 @@ class UserCreate(UserBase):
             raise ValueError('Password must include at least one special character.')
         return value
 
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     is_active: Optional[bool] = None
