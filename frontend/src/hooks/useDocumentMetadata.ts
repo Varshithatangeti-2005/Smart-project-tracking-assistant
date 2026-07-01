@@ -8,7 +8,7 @@ interface MetadataProps {
 export default function useDocumentMetadata({ title, description }: MetadataProps) {
   useEffect(() => {
     // Update Document Title
-    document.title = `${title} | Smart Project Tracking Assistant`
+    document.title = `${title} | Smart Project MANAGEMENT Assistant`
 
     // Update or Insert Meta Description Tag
     if (description) {

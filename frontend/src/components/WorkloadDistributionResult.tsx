@@ -12,7 +12,7 @@ interface Assignment {
 export interface WorkloadDistributionResultProps {
   result: {
     assignments: Assignment[]
-    balance_score?: string
+    balance_score?: number
   }
   teamCapacities: Record<string, number>
   onReset: () => void
@@ -31,13 +31,13 @@ export default function WorkloadDistributionResult({
     ])
   ).sort()
 
-  const balanceScoreLower = (result.balance_score || "").toLowerCase()
+  const balanceScoreLower = result.balance_score || 0
 
   const getBalanceBadgeStyle = () => {
-    if (balanceScoreLower.includes("optimal") || balanceScoreLower.includes("excellent") || balanceScoreLower.includes("high")) {
+    if (balanceScoreLower >= 80) {
       return "bg-emerald-500/10 text-emerald-500 border-emerald-500/30 font-bold uppercase"
     }
-    if (balanceScoreLower.includes("moderate") || balanceScoreLower.includes("fair") || balanceScoreLower.includes("good")) {
+    if (balanceScoreLower >= 50) {
       return "bg-amber-500/10 text-amber-500 border-amber-500/30 font-bold uppercase"
     }
     return "bg-red-500/10 text-red-500 border-red-500/30 font-bold uppercase"
@@ -89,11 +89,11 @@ export default function WorkloadDistributionResult({
               </CardTitle>
             </div>
             
-            {result.balance_score && (
+            {result.balance_score !== undefined && (
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground font-medium">Balance Score:</span>
                 <Badge variant="outline" className={getBalanceBadgeStyle()}>
-                  {result.balance_score}
+                  {result.balance_score}/100
                 </Badge>
               </div>
             )}

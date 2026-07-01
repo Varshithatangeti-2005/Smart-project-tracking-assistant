@@ -77,4 +77,4 @@ class WorkloadAssignment(BaseModel):
 
 class WorkloadDistributionResponse(BaseModel):
     assignments: List[WorkloadAssignment]
-    balance_score: Optional[str] = None
+    balance_score: Optional[int] = None

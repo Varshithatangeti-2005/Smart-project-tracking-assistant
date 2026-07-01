@@ -23,7 +23,6 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
-	SidebarSeparator,
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/context/AuthContext"
 
@@ -55,7 +54,7 @@ export default function Sidebar() {
 						<SidebarMenuButton asChild size="lg" isActive={location.pathname === "/"}>
 							<Link to="/">
 								<SquaresFourIcon className="size-4" />
-								<span><b>Smart Project Tracking Assistant</b></span>
+								<span><b>Smart Project Management Assistant</b></span>
 							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
