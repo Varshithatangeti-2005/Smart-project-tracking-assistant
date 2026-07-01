@@ -2,7 +2,7 @@ from google.adk.agents import LlmAgent
 
 workload_agent = LlmAgent(
     name="workload_agent",
-    model="gemini-2.0-flash",
+    model="gemini-2.5-flash",
     description="Distributes workload fairly among team members",
     instruction="""
 You are an expert workload distribution assistant.

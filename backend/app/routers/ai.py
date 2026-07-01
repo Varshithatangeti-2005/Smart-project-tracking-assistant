@@ -19,9 +19,9 @@ from fastapi import HTTPException
 router = APIRouter()
 
 @router.post("/task-estimation", response_model=TaskEstimationResponse)
-def task_estimation(request: TaskEstimationRequest):
+async def task_estimation(request: TaskEstimationRequest):
     try:
-        return estimate_task(request)
+        return await estimate_task(request)
     except HTTPException:
         raise
     except Exception as e:
@@ -31,10 +31,10 @@ def task_estimation(request: TaskEstimationRequest):
     "/sprint-planning",
     response_model=SprintPlanningResponse
 )
-def sprint_planning(request: SprintPlanningRequest):
+async def sprint_planning(request: SprintPlanningRequest):
     try:
         print("Sprint request received")
-        result = plan_sprint(request)
+        result = await plan_sprint(request)
         print("Sprint result:", result)
         return result
 
@@ -43,18 +43,18 @@ def sprint_planning(request: SprintPlanningRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/risk-analysis", response_model=RiskAnalysisResponse)
-def risk_analysis(request: RiskAnalysisRequest):
+async def risk_analysis(request: RiskAnalysisRequest):
     try:
-        return analyze_risk(request)
+        return await analyze_risk(request)
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/workload-distribution", response_model=WorkloadDistributionResponse)
-def workload_distribution(request: WorkloadDistributionRequest):
+async def workload_distribution(request: WorkloadDistributionRequest):
     try:
-        return distribute_workload(request)
+        return await distribute_workload(request)
     except HTTPException:
         raise
     except Exception as e:

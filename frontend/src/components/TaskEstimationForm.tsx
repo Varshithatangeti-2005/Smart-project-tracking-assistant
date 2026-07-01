@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import type { Project } from "@/types/Project"
+import type { Task } from "@/types/Task"
 
 export interface TaskEstimationFormProps {
   onSubmit: (data: {
@@ -22,11 +24,21 @@ export interface TaskEstimationFormProps {
     factors: string
   }) => Promise<void> | void
   loading: boolean
+  sprintOptions?: Array<{ name: string; tasks: string[] }>
+  projects?: Project[]
+  selectedProjectId?: string
+  onProjectChange?: (projectId: string) => void
+  projectTasks?: Task[]
 }
 
 export default function TaskEstimationForm({
   onSubmit,
   loading,
+  sprintOptions = [],
+  projects = [],
+  selectedProjectId = "",
+  onProjectChange,
+  projectTasks = [],
 }: TaskEstimationFormProps) {
   const [taskName, setTaskName] = useState("")
   const [description, setDescription] = useState("")
@@ -34,6 +46,22 @@ export default function TaskEstimationForm({
   const [deadlineDays, setDeadlineDays] = useState(7)
   const [experience, setExperience] = useState("Intermediate")
   const [factors, setFactors] = useState("")
+  const [selectedSprint, setSelectedSprint] = useState("")
+
+  useEffect(() => {
+    if (!sprintOptions.length) return
+    if (!selectedSprint && sprintOptions[0]) {
+      setSelectedSprint(sprintOptions[0].name)
+    }
+  }, [sprintOptions, selectedSprint])
+
+  const selectedSprintTasks = sprintOptions.find((sprint) => sprint.name === selectedSprint)?.tasks ?? []
+
+  const handleSprintTaskChange = (task: string) => {
+    setTaskName(task)
+    setDescription(`Sprint: ${selectedSprint}\nTask: ${task}\nDescription: ${task} work to be completed within ${selectedSprint}.`)
+    setFactors(`Dependency: finalise related ${selectedSprint} story\nRisks: scope change or external approval delays`)
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -61,9 +89,72 @@ export default function TaskEstimationForm({
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
+            <Label htmlFor="project-select" className="font-semibold text-foreground">
+              Project
+            </Label>
+            <Select value={selectedProjectId} onValueChange={onProjectChange}>
+              <SelectTrigger id="project-select">
+                <SelectValue placeholder="Select a project" />
+              </SelectTrigger>
+              <SelectContent>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={String(project.id)}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {projectTasks.length > 0 && (
+              <p className="text-xs text-muted-foreground/80">
+                Showing {projectTasks.length} task(s) from the selected project.
+              </p>
+            )}
+          </div>
+
+          {sprintOptions.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="sprint-select" className="font-semibold text-foreground">
+                Generated Sprint
+              </Label>
+              <Select value={selectedSprint} onValueChange={setSelectedSprint}>
+                <SelectTrigger id="sprint-select">
+                  <SelectValue placeholder="Choose a generated sprint" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sprintOptions.map((sprint) => (
+                    <SelectItem key={sprint.name} value={sprint.name}>
+                      {sprint.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground/80">
+                Pick a sprint from the planning step to reuse its task breakdown.
+              </p>
+            </div>
+          )}
+
+          <div className="space-y-2">
             <Label htmlFor="task-name" className="font-semibold text-foreground">
               Task Name
             </Label>
+            {selectedSprintTasks.length > 0 && (
+              <div className="rounded-md border border-muted/40 bg-muted/10 p-2">
+                <p className="mb-2 text-[11px] font-medium text-muted-foreground">Sprint tasks</p>
+                <div className="flex flex-wrap gap-2">
+                  {selectedSprintTasks.map((task) => (
+                    <button
+                      key={task}
+                      type="button"
+                      onClick={() => handleSprintTaskChange(task)}
+                      className="rounded-full border border-primary/20 bg-background px-2 py-1 text-[11px] text-foreground hover:bg-primary/10"
+                    >
+                      {task}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <Input
               id="task-name"
               placeholder="e.g. Implement OAuth2 Authentication"

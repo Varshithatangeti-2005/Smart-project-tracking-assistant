@@ -68,6 +68,13 @@ export default function SprintPlanning() {
         objectives: formData.objectives || undefined,
       })
 
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(
+          "generated-sprints",
+          JSON.stringify(response.sprint_outlines)
+        )
+      }
+
       setResult(response)
     } catch (err) {
       setError((err as Error).message)

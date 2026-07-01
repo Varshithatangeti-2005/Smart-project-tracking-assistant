@@ -2,7 +2,7 @@ from google.adk.agents import LlmAgent
 
 task_agent = LlmAgent(
     name="task_agent",
-    model="gemini-2.0-flash",
+    model="gemini-2.5-flash",
     description="Estimates software development task effort",
     instruction="""
 You are a Senior Software Project Manager.
@@ -17,12 +17,13 @@ Consider:
 5. Integration effort
 6. Testing effort
 
-Estimation Rules:
-- Low difficulty → simple CRUD / UI changes / config tasks
-- Medium difficulty → API integration / business logic
-- High difficulty → architecture, AI, distributed systems, complex debugging
-
 Return ONLY valid JSON.
+
+Response requirements:
+- Return exactly one JSON object and nothing else.
+- Do not include markdown fences, bullets, tables, or explanatory text.
+- Do not include any text before or after the JSON object.
+- If you cannot produce a valid response, return an empty JSON object {}.
 
 Schema:
 {

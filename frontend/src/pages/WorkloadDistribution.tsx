@@ -1,5 +1,8 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+import { useProject } from '@/context/ProjectContext'
 import { workloadDistribution } from '@/services/aiService'
+import { fetchTasks } from '@/services/taskService'
+import type { Task } from '@/types/Task'
 import WorkloadDistributionForm from '@/components/WorkloadDistributionForm'
 import WorkloadDistributionResult from '@/components/WorkloadDistributionResult'
 import { Card, CardContent } from "@/components/ui/card"
@@ -17,10 +20,47 @@ export default function WorkloadDistribution() {
     description: "Balance team tasks to avoid overloading developers and eliminate project bottlenecks."
   })
 
+  const { projects, loadProjects } = useProject()
   const [status, setStatus] = useState<Status>("idle")
   const [result, setResult] = useState<DistributionResult | null>(null)
   const [teamCapacities, setTeamCapacities] = useState<Record<string, number>>({})
   const [error, setError] = useState('')
+  const [selectedProjectId, setSelectedProjectId] = useState('')
+  const [projectTasks, setProjectTasks] = useState<Task[]>([])
+  const [sprintOptions, setSprintOptions] = useState<Array<{ name: string; tasks: string[] }>>([])
+
+  useEffect(() => {
+    loadProjects()
+  }, [loadProjects])
+
+  useEffect(() => {
+    const loadTasks = async () => {
+      if (!selectedProjectId) {
+        setProjectTasks([])
+        return
+      }
+
+      try {
+        const tasks = await fetchTasks()
+        setProjectTasks(tasks.filter((task) => String(task.project_id) === selectedProjectId))
+      } catch (err) {
+        console.error('Failed to load project tasks', err)
+      }
+    }
+
+    loadTasks()
+  }, [selectedProjectId])
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("generated-sprints")
+      if (!raw) return
+      const parsed = JSON.parse(raw) as Array<{ name: string; tasks?: string[] }>
+      setSprintOptions(parsed.filter(Boolean).map((item) => ({ name: item.name, tasks: item.tasks ?? [] })))
+    } catch (err) {
+      console.error("Unable to read sprint options", err)
+    }
+  }, [])
 
   const handleSubmit = useCallback(async (formData: {
     teamMembers: string
@@ -110,6 +150,11 @@ export default function WorkloadDistribution() {
           <WorkloadDistributionForm
             onSubmit={handleSubmit}
             loading={false}
+            sprintOptions={sprintOptions}
+            projects={projects}
+            selectedProjectId={selectedProjectId}
+            onProjectChange={setSelectedProjectId}
+            projectTasks={projectTasks}
           />
         )
     }

@@ -75,6 +75,11 @@ export async function request<T>(path: string, options: RequestInit = {}) {
       // Keep raw text if JSON parse fails.
     }
 
+    if (response.status === 429) {
+      errorMessage =
+        'AI quota exhausted. Please wait a moment or contact your administrator to increase the quota.'
+    }
+
     throw new Error(errorMessage)
   }
 

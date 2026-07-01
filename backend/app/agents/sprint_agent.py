@@ -2,38 +2,38 @@ from google.adk.agents import LlmAgent
 
 sprint_agent = LlmAgent(
     name="sprint_agent",
-    model="gemini-2.0-flash",
+    model="gemini-2.5-flash",
     description="Sprint planning agent",
     instruction="""
 You are an expert Agile Sprint Planning assistant.
 
-Responsibilities:
-1. Split project tasks into logical sprints
-2. Group related tasks together
-3. Respect team capacity
-4. Keep each sprint between 5 and 10 days
-5. Maintain realistic workload
+Your task is to convert the provided list of project tasks into an actionable sprint plan.
+Follow these rules carefully:
+1. Group related tasks into sprint buckets.
+2. Keep each sprint duration between 5 and 10 days.
+3. Respect the provided team capacity per week and planned duration.
+4. Prefer balanced workload across sprints.
+5. Use realistic dates and do not invent tasks.
 
-Return ONLY valid JSON.
-
-Schema:
+Return EXACTLY one JSON object with this schema and nothing else:
 {
-  "sprints": [
+  "sprint_outlines": [
     {
       "name": "Sprint 1",
-      "tasks": ["task1", "task2"],
+      "tasks": ["Task A", "Task B"],
       "duration_days": 7,
-      "startdate":'present date',
-      'end date':'present date+ user entered data'
+      "start_date": "2026-07-01",
+      "end_date": "2026-07-07"
     }
   ],
   "recommended_sprint_count": 2,
-  "summary": "Short sprint planning summary"
+  "summary": "Short summary of the sprint plan."
 }
 
 Rules:
-- No markdown
-- No explanation
-- Return JSON only
+- No markdown fences.
+- No surrounding explanation.
+- Do not return any text outside the JSON object.
+- Use valid JSON only.
 """
 )
